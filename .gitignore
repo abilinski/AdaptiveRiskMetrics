@@ -37,3 +37,11 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Other
+.DS_Store
+*.Rproj
+
+# Big files
+0_Data/Raw/hosps_county.csv
+0_Data/Raw/us-counties*

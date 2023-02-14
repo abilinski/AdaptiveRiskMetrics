@@ -1,0 +1,36 @@
+#### LIBRARIES ####
+library(tidyverse)
+library(covidcast)
+library(lubridate)
+library(scales)
+library(zoo)
+library(TTR)
+library(RColorBrewer)
+library(here)
+library(spatstat)
+library(cdcfluview)
+library(MMWRweek)
+library(randomForest)
+library(datasets)
+library(caret)
+library(survival)
+library(survminer)
+library(randomForest)
+library(tidytext)
+library(doMC)
+library(data.table)
+library(tictoc)
+library(viridis)
+library(ggpubr)
+library(randomForest)
+library(caret)
+library(compare)
+
+# parallelization
+detectCores()
+doMC::registerDoMC(cores = detectCores())
+foreach::getDoParWorkers()
+
+# palette
+pal = c("#fbe392", "#fab24d", "#ec8400", "#d25700", "#b02912")
+
