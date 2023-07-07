@@ -1,5 +1,5 @@
 #### SETUP ####
-here::i_am("1_Scripts/0_data_cleaning_county.R")
+here::i_am("1_Scripts/0_data_cleaning_hsa.R")
 source("global_options.R")
 
 #### POPULATION DATA ####
@@ -92,7 +92,7 @@ chk_complete = h %>% filter(date >= "2021-02-01" & date <= "2022-10-01") %>%
   group_by(health_service_area_number) %>% summarize(n = n())
 
 #### CASE DATA ####
-df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>% 
+df0 = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>% 
   bind_rows(read.csv(here("0_Data", "Raw", "us-counties-2022.csv"))) %>%
   
   # filter out PR & Virgin Islands & arrange
@@ -103,9 +103,12 @@ df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>%
                      "United States")) %>%
 
   filter(!county=="Unknown") %>%
-  mutate(fips = as.numeric(sub("USA-", "", geoid))) %>%
+  mutate(fips = as.numeric(sub("USA-", "", geoid)),
+         state_old = state) %>%
   
   # rename edited counties
+  # note that all NYT-combined counties mapped to same HSA
+  # so I just picked one
   mutate(fips = ifelse(fips==36998, 36005, fips)) %>%
   mutate(fips = ifelse(fips==29998, 29037, fips)) %>%
   mutate(fips = ifelse(fips==29997, 29097, fips)) %>%
@@ -113,7 +116,15 @@ df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>%
   mutate(fips = ifelse(fips==02998, 02105, fips)) %>%
   
   # join to hsa
-  left_join(c, c("fips" = "county_fips")) %>%
+  left_join(c, c("fips" = "county_fips"))
+
+# run checks on missing
+# View(df0 %>% filter(is.na(health_service_area_population)) %>% ungroup() %>% dplyr::select(health_service_area, health_service_area_number) %>% unique())
+# not concerning -- just ones that NYT combined + outside of scope
+# View(c %>% filter(!county_fips %in% df0$fips) %>% ungroup() %>% unique())
+
+# run subsequent
+df = df0 %>%
   
   # average over HSA
   group_by(date, health_service_area_number, health_service_area, health_service_area_population) %>%
@@ -134,7 +145,7 @@ df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>%
   # join to hospital data
   left_join(h %>% dplyr::select(date,
                                 admits_confirmed_avg, perc_covid,
-                                admits_confirmed_100K, icu_100K), 
+                                admits_confirmed_100K, icu_confirmed_avg, icu_100K), 
             c("health_service_area_number"="health_service_area_number", "ymd"="date")) %>%
   
   # estimate CDC metrics
@@ -215,7 +226,11 @@ d_out_pre_hsa = df %>%
          zeke_time_3 = lead(deaths_avg_per_100k*7, 3) > 1,
          two_zeke_time_3 = lead(deaths_avg_per_100k*7, 3) > 2,
          icu_2_time_3 = icu_21_lag_100K*7 > 2,
-         
+         perc_covid_10_time_3 = lead(perc_covid_100, 3) > 10,
+         change_admits = admits_weekly - lag(admits_weekly, 1),
+         change_perc = perc_covid_100 - lag(perc_covid_100, 1),
+         change_cases = cases_weekly - lag(cases_weekly, 1),
+  
          # 14-day outcomes
          zeke_time_3_14d = deaths_21_lag_100k_14d > 2,
          two_zeke_time_3_14d = deaths_21_lag_100k_14d > 4,
@@ -235,9 +250,13 @@ d_out_pre_hsa %>% gather(var, value, deaths_weekly, admits_weekly, cases_weekly,
   filter(date<="2022-10-01") %>%
   group_by(var) %>% summarize(sum(is.na(value)))
 
+# check on missing data
+d_out_pre_hsa %>% filter(is.na(health_service_area_population)) %>% ungroup() %>% dplyr::select(ymd, state, health_service_area, health_service_area_number) %>% unique()
+#View(d_out_pre_hsa %>% group_by(ymd) %>% summarize(sum(health_service_area_population)))
+
 #### SAVE CLEANED DATA ####
 save(d_out_pre_hsa, file = here("0_Data", "Cleaned", "hsa_time_data.RData"))
-
+write.csv(d_out_pre_hsa, file = here("0_Data", "Cleaned", "hsa_time_data.csv"))
 
 
 

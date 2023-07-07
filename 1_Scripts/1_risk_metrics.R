@@ -62,6 +62,9 @@ define_metrics_DT = function(d_out_pre, admit_levels, case_levels, perc_levels,
   dt = dt[,current_zeke:=0][icu_weekly>2 & outcome_label=="icu_2_time_3", current_zeke:=1]
   dt = dt[deaths_avg_per_100k*7>1 & outcome_label=="zeke_time_3", current_zeke:=1]
   dt = dt[deaths_avg_per_100k*7>2 & outcome_label=="two_zeke_time_3", current_zeke:=1]
+  dt = dt[perc_covid_100>10 & outcome_label=="perc_covid_10_time_3", current_zeke:=1]
+  dt = dt[perc_covid_100>5 & outcome_label=="perc_covid_5_time_3", current_zeke:=1]
+  dt = dt[admits_weekly>10 & outcome_label=="admits_time_3", current_zeke:=1]
   
   # current values (sims)
   dt = dt[outcome_label=="cutoff1", current_zeke:=lag_cutoff1]
@@ -251,12 +254,13 @@ summ_metrics2 = function(d_test_ind, gvars = c("quarter", "var", "outcome_label"
 ##### RUN SPECIFICATIONS ####
 run_specs = function(d_test_ind, w_ind, end_dates, form, var_lab, quarter = F,
                      by_start_val, gvars = c("quarter", "var", "outcome_label"),
-                     end_pre_cut, method = "glm", mtry = 1){
+                     end_pre_cut, method = "glm", mtry = 1, save = F, type = "state"){
   
   # run regressions
   # filter data to only have on indicator
   z = best_measure_DT_reg(d_test_ind[var=="cdc_flag",], w = w_ind, end_dates = end_dates,
                           quarter = quarter, form = form, method = method)[,var:=var_lab]
+  if(save) save(z, file = here("2_Figures", "Data", "Raw", paste(type, "_data_", as.character(form), ifelse(quarter, "_simp", ""), ".RData", sep = "")))
   
   # summarize overall
   out = summ_metrics(z, by_start = by_start_val, end_pre_cut = end_pre_cut)
@@ -271,7 +275,8 @@ run_specs = function(d_test_ind, w_ind, end_dates, form, var_lab, quarter = F,
 #### SUMMARY STATISTICS ####
 run_summary_stats = function(d_test_ind, by_start_val = F, end_pre_cut = end_pre, 
                              end_dates, gvars = c("quarter", "var", "outcome_label"),
-                             run_all = F, w_ind = 4, method = "glm"){
+                             run_all = F, w_ind = 4, method = "glm", save = F, type = "state",
+                             run_all_specs = FALSE){
   
   # cdc metrics
   out_cdc = summ_metrics(d_test_ind[ymd <= end_date], 
@@ -290,13 +295,15 @@ run_summary_stats = function(d_test_ind, by_start_val = F, end_pre_cut = end_pre
     var_lab = c("Adaptive", "Adaptive: H",
                 "Adaptive: C", "Adaptive: CZ", "Adaptive: CH", "Adaptive: CHZ",
                 "Adaptive: HO", "Adaptive: HOZ", 
-                "Adaptive: CHO", "Adaptive: CHOZ", "Simplified adaptive")
+                "Adaptive: CHO", "Adaptive: CHOZ", 
+                "Adaptive.2", "Adaptive: CHOD", "Adaptive: CHODZ", 
+                "Simplified adaptive", "Simplified adaptive.2")
     
     # make data frames
     specs = data.frame(var_lab,
-      quarter = c(rep(F, length(var_lab)-1), T),
+      quarter = c(rep(F, length(var_lab)-2), T, T),
       form = 1:length(var_lab),
-      mtry = c(2,1,1,2,2,3,2,3,3,4,2)
+      mtry = 1
     )
     
     # functional forms
@@ -310,16 +317,24 @@ run_summary_stats = function(d_test_ind, by_start_val = F, end_pre_cut = end_pre
               outcome_value ~ perc_covid_100 + admits_weekly + current_zeke,
               outcome_value ~ cases_weekly + admits_weekly + perc_covid_100,
               outcome_value ~ cases_weekly + admits_weekly + perc_covid_100 + current_zeke,
-              outcome_value ~ admits_weekly + current_zeke)
+              outcome_value ~ admits_weekly + current_zeke + change_admits,
+              outcome_value ~ cases_weekly + admits_weekly + perc_covid_100 + change_admits + change_perc + change_cases,
+              outcome_value ~ cases_weekly + admits_weekly + perc_covid_100 + current_zeke + change_admits + change_perc + change_cases,
+              outcome_value ~ admits_weekly + current_zeke,
+              outcome_value ~ admits_weekly + current_zeke + change_admits)
     
     # set up data table for storage
     outs = data.table()
     
+    if(run_all_specs){
+      spec_picks = 1:nrow(specs)
+    }else{spec_picks = c(1,9,10,12,14)}
     # run each specification
-    for(i in 1:nrow(specs)){
+    for(i in spec_picks){
     temp = run_specs(d_test_ind = d_test_ind, w_ind = w_ind, end_dates = end_dates, gvars = gvars,
-                   form = forms[[specs$form[i]]], var_lab = specs$var_lab[i], method = method,
-                   quarter = specs$quarter[i], by_start_val = by_start_val, end_pre_cut = end_pre_cut, mtry = specs$mtry[1])
+                   form = forms[[specs$form[i]]], var_lab = specs$var_lab[i], method = method, 
+                   quarter = specs$quarter[i], by_start_val = by_start_val, end_pre_cut = end_pre_cut, mtry = specs$mtry[1],
+                   save = save, type = type)
     outs = rbindlist(list(outs, temp), fill = TRUE)
     
     }
@@ -350,8 +365,9 @@ run_base_ests = function(d_out_pre,
                          admit_levels = 0, case_levels = 0,
                          perc_levels = 0, w = 4,
                          title = "States", run_all = T,
-                         outcomes = c("zeke_time_3", "two_zeke_time_3", "icu_2_time_3"),
-                         prev = F, method = "glm", gvars = c("quarter", "var", "outcome_label")){
+                         outcomes = c("zeke_time_3", "two_zeke_time_3", "icu_2_time_3", 
+                                      "perc_covid_10_time_3"), run_all_specs = FALSE,
+                         prev = F, method = "glm", gvars = c("quarter", "var", "outcome_label"), save = F, type = "state"){
 
   # set up different indicators
   d_test_ind = define_metrics_DT(d_out_pre,
@@ -370,33 +386,34 @@ run_base_ests = function(d_out_pre,
   # run over different preference sets
   d_test_ind = d_test_ind[,mult:=1]
   tbl1_summ1 = run_summary_stats(d_test_ind, w_ind = w, gvars = gvars,
-                                 end_dates = end_dates, run_all = run_all, method = method)
+                                 end_dates = end_dates, run_all = run_all, method = method, save = save, type = type,
+                                 run_all_specs = run_all_specs)
   
   d_test_ind = d_test_ind[,mult:=mult_high]
-  tbl1_summ2= run_summary_stats(d_test_ind, end_dates = end_dates, run_all = run_all, method = method, gvars = gvars)
+  tbl1_summ2= run_summary_stats(d_test_ind, end_dates = end_dates, run_all = run_all, method = method, gvars = gvars,
+                                run_all_specs = run_all_specs)
 
   d_test_ind = d_test_ind[,mult:=mult_low]
-  tbl1_summ.5 = run_summary_stats(d_test_ind, end_dates = end_dates, run_all = run_all, method = method, gvars = gvars)
+  tbl1_summ.5 = run_summary_stats(d_test_ind, end_dates = end_dates, run_all = run_all, method = method, gvars = gvars,
+                                  run_all_specs = run_all_specs)
 
-  d_test_ind = d_test_ind[,mult:=1]
-  d_test_ind = d_test_ind[current_zeke==FALSE,mult:=5]
-  tbl1_summ_sens = run_summary_stats(d_test_ind, end_dates = end_dates, run_all = run_all, method = method, gvars = gvars)
-  
   # combine different values
   out = rbindlist(list(data.table(tbl1_summ1[[2]])[,lab := "Neutral"],
                        data.table(tbl1_summ2[[2]])[,lab:="Better safe than sorry (0.5x FP)"], 
-                       data.table(tbl1_summ.5[[2]])[,lab:="Don't cry wolf (0.5x FN)"],
-                       data.table(tbl1_summ_sens[[2]])[,lab:="Sensitivity analysis"]
+                       data.table(tbl1_summ.5[[2]])[,lab:="Don't cry wolf (0.5x FN)"]
                        ))
   
   # set labels
-  out[,lab:=factor(lab, levels = c("Neutral", "Don't cry wolf (0.5x FN)", "Better safe than sorry (0.5x FP)", "Sensitivity analysis"))]
+  out[,lab:=factor(lab, levels = c("Neutral", "Don't cry wolf (0.5x FN)", "Better safe than sorry (0.5x FP)"))]
   out[var=="cdc_flag", var:="Community level"]
   out[var=="current_zeke", var:="Z"]
+  out[,lab2:=outcome_label]
   out[outcome_label=="zeke_time_3", lab2:=">1 death/100K/wk"]
   out[outcome_label=="two_zeke_time_3", lab2:=">2 deaths/100K/wk"]
-  out[outcome_label=="half_zeke_time_3", lab2:=">0.5 deaths/100K/wk"]
   out[outcome_label=="icu_2_time_3", lab2:=">2 ICU patients/100K/wk"]
+  out[outcome_label=="perc_covid_10_time_3", lab2:=">10% inpatient bed occupancy"]
+  out[,lab2:=factor(lab2, levels = c(">1 death/100K/wk",">2 deaths/100K/wk", ">2 ICU patients/100K/wk", ">10% inpatient bed occupancy"))]
+  
   out[outcome_label=="pred_rev", lab2:="Synthetic data"]
   
   return(out)
@@ -407,7 +424,7 @@ run_base_ests_sims = function(d_out_pre,
                          admit_levels = 0, case_levels = 0,
                          perc_levels = 0, w = 4, 
                          run_all = T, gvars = c("month", "var", "outcome_label"),
-                         outcomes = c("zeke_time_3", "two_zeke_time_3", "icu_2_time_3"),
+                         outcomes = c("zeke_time_3", "two_zeke_time_3"),
                          method = "glm"){
   
   # set up different indicators
@@ -435,7 +452,7 @@ run_roc = function(d_out_pre,
                          admit_levels = 0, case_levels = 0,
                          perc_levels = 0, w = 4,
                          title = "States", run_all = T,
-                         outcomes = c("zeke_time_3", "two_zeke_time_3", "icu_2_time_3"),
+                         outcomes = c("zeke_time_3", "two_zeke_time_3"),
                          method = "glm", cuts){
   
   # set up different indicators
@@ -462,13 +479,9 @@ run_roc = function(d_out_pre,
   out[var=="cdc_flag", var:="Community level"]
   out[outcome_label=="zeke_time_3", lab2:=">1 death/100K/wk"]
   out[outcome_label=="two_zeke_time_3", lab2:=">2 deaths/100K/wk"]
-  out[outcome_label=="half_zeke_time_3", lab2:=">0.5 deaths/100K/wk"]
   out[outcome_label=="icu_2_time_3", lab2:=">2 ICU patients/100K/wk"]
-  out[outcome_label=="pred_rev", lab2:="Synthetic data"]
+  out[outcome_label=="perc_covid_10_time_3", lab2:=">10% inpatient bed occupancy"]
+  out[,lab2:=factor(lab2, levels = c(">1 death/100K/wk",">2 deaths/100K/wk", ">2 ICU patients/100K/wk", ">10% inpatient bed occupancy"))]
   
   return(list(out))
 }
-
-
-
-

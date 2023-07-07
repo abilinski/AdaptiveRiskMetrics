@@ -214,6 +214,10 @@ d_out_pre_state = df %>%
     zeke_time_3 = lead(deaths_avg_per_100k*7, 3) > 1,
     two_zeke_time_3 = lead(deaths_avg_per_100k*7, 3) > 2,
     icu_2_time_3 = icu_21_lag_100K > 2,
+    perc_covid_10_time_3 = lead(perc_covid_100, 3) > 10,
+    change_admits = admits_weekly - lag(admits_weekly, 1),
+    change_perc = perc_covid_100 - lag(perc_covid_100, 1),
+    change_cases = cases_weekly - lag(cases_weekly, 1),
     
     # 14-day outcomes
     zeke_time_3_14d = deaths_21_lag_100k_14d > 2,
@@ -234,3 +238,4 @@ d_out_pre_state %>% gather(var, value, deaths_weekly, admits_weekly, cases_weekl
 
 #### SAVE CLEANED DATA ####
 save(d_out_pre_state, file = here("0_Data", "Cleaned", "state_time_data.RData"))
+write.csv(d_out_pre_state, file = here("0_Data", "Cleaned", "state_time_data.csv"))

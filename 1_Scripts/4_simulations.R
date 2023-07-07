@@ -69,7 +69,7 @@ run_sims = function(d1, param_dates, scale_val = 0, gvars = c("month", "var", "o
     gather(cutoff, cutoff_val, cutoff1, cutoff2, cutoff3, cutoff4, cutoff5, cutoff6) %>%
     group_by(state) %>% arrange(ymd) %>%
     mutate(n = n(), 
-           fake_data = 1/(1+exp(-1*(3*(admits_weekly-cutoff_val)) - rlogis(n, scale = scale_val))),
+           fake_data = 1/(1+exp(-1*(3*admits_weekly-3*cutoff_val))),
            fake_outcome = rbinom(n, size = 1, prob = fake_data)) 
   # Check that this is working right
   #temp_df %>% mutate(prob_cat = cut(fake_data, breaks = 10, include_lowest = T)) %>%

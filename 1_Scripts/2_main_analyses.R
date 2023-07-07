@@ -35,20 +35,20 @@ admit_levels = c(5, 10, 15, 20, 25)
 case_levels = c(50, 100, 150, 200, 250, 300)
 perc_levels = c(5, 10, 15, 20)
 
-run_analyses = function(type = "state", run = 1:12){
-  if(type=="state"){
+run_analyses = function(type_val = "state", run = 1:13, save = F, specs = FALSE){
+  if(type_val=="state"){
     d_out_pre = d_out_pre_state
-  }else if(type=="county"){
+  }else if(type_val=="county"){
     d_out_pre = d_out_pre_cty
   }else{d_out_pre = d_out_pre_hsa}
   
   # make names
-  df_names = c("w8", "w12", "C", "CH", "CHO1", "CHO2", "CHO3", "HO", "0", "uw", "roc")
-  dfs = c(type, paste(type, df_names, sep = "_"))
+  df_names = c("w8", "w12", "C", "CH", "CHO1", "CHO2", "CHO3", "HO", "0", "uw", "roc", "CHO4")
+  dfs = c(type_val, paste(type_val, df_names, sep = "_"))
   
   # whether to rerun indicators
   # run states with H + adaptive (w/different week lags)
-  if(1 %in% run) assign(dfs[1], run_base_ests(d_out_pre, admit_levels = admit_levels, run_all = T)); gc()
+  if(1 %in% run) assign(dfs[1], run_base_ests(d_out_pre, admit_levels = admit_levels, run_all = T, run_all_specs = specs, save = save, type = type_val)); gc()
   if(2 %in% run) assign(dfs[2], run_base_ests(d_out_pre, admit_levels = admit_levels, w = 8)); gc()
   if(3 %in% run) assign(dfs[3], run_base_ests(d_out_pre, admit_levels = admit_levels, w = 12)); gc()
   
@@ -57,7 +57,8 @@ run_analyses = function(type = "state", run = 1:12){
   if(5 %in% run) assign(dfs[5], run_base_ests(d_out_pre, admit_levels = admit_levels, case_levels = case_levels, run_all = F)); gc()
   if(6 %in% run) assign(dfs[6], run_base_ests(d_out_pre, admit_levels = admit_levels, case_levels = case_levels, perc_levels = perc_levels, run_all = F, outcome = "zeke_time_3")); gc()
   if(7 %in% run) assign(dfs[7], run_base_ests(d_out_pre, admit_levels = admit_levels, case_levels = case_levels, perc_levels = perc_levels, run_all = F, outcome = "two_zeke_time_3")); gc()
-  if(8 %in% run) assign(dfs[8], run_base_ests(d_out_pre, admit_levels = admit_levels, case_levels = case_levels, perc_levels = perc_levels, run_all = F, outcome = "icu_2_time_3")); gc()
+  if(8 %in% run) assign(dfs[8], run_base_ests(d_out_pre, admit_levels = admit_levels, case_levels = case_levels, perc_levels = perc_levels, run_all = F, outcome = c("icu_2_time_3"))); gc()
+  if(13 %in% run) assign(dfs[13], run_base_ests(d_out_pre, admit_levels = admit_levels, case_levels = case_levels, perc_levels = perc_levels, run_all = F, outcome = c("perc_covid_10_time_3"))); gc()
   if(9 %in% run)assign(dfs[9], run_base_ests(d_out_pre, admit_levels = admit_levels, perc_levels = perc_levels, run_all = F)); gc()
 
   # prevalence
@@ -73,18 +74,23 @@ run_analyses = function(type = "state", run = 1:12){
   save(list = dfs[run], file = here("2_Figures", location, paste(type, "_data_", min(run), "_", max(run), ".RData", sep = "")))
 }
 
+# set up saving
+save_var = type=="base"
+
 # run states
-run_analyses("state")
+run_analyses("state", save = save_var, specs = type=="base")
 
 # run hsa
-run_analyses("hsa")
+run_analyses("hsa", save = save_var, specs = type=="base")
 
 # run counties
-run_analyses("county", 1:4)
+run_analyses("county", 1:4, save = save_var)
 run_analyses("county", 5)
 run_analyses("county", 6)
 run_analyses("county", 7)
 run_analyses("county", 8)
+run_analyses("county", 13)
 run_analyses("county", 9)
 run_analyses("county", 10:12)
 }
+

@@ -91,8 +91,8 @@ h = read.csv(here("0_Data", "Raw", "hosps_county.csv")) %>%
   mutate(fips = ifelse(fips == c(29095), 29998, fips)) %>%
   
   # Joplin, Mo. counties
-  filter(!fips%in%c(29145, 29097)) %>%
-  mutate(fips = ifelse(fips == c(29097), 29037, fips)) %>%
+  filter(!fips%in%c(29145)) %>%
+  mutate(fips = ifelse(fips == c(29097), 29997, fips)) %>%
   
   # Alaska 1
   filter(!fips%in%c(2164)) %>%
@@ -100,7 +100,7 @@ h = read.csv(here("0_Data", "Raw", "hosps_county.csv")) %>%
   
   # Alaska 2
   filter(!fips%in%c(2105)) %>%
-  mutate(fips = ifelse(fips == c(2282), 2164, fips)) %>%
+  mutate(fips = ifelse(fips == c(2282), 02998, fips)) %>%
   
   # filter date
   filter(date>filter_date)
@@ -156,9 +156,9 @@ county_census = county_census %>%
          fips = ifelse(fips %in% c(36005, 36047, 36061, 36081, 36085),
                                                             36998, fips),
          fips = ifelse(fips %in% c(29037, 29165, 29047,29095), 29998, fips),
-         fips = ifelse(fips %in% c(29145, 29097, 29097), 29037, fips),         
+         fips = ifelse(fips %in% c(29145, 29097), 29997, fips),         
          fips = ifelse(fips %in% c(2164, 2060), 02997, fips), 
-         fips = ifelse(fips %in% c(2105, 2282), 2164, fips)) %>%
+         fips = ifelse(fips %in% c(2105, 2282), 02998, fips)) %>%
   group_by(fips, STNAME) %>% summarize(POPESTIMATE2019 = sum(POPESTIMATE2019),
                                         CTYNAME = CTYNAME[1]) %>%
   mutate(CTYNAME = ifelse(fips==36998, "New York City", CTYNAME))
@@ -168,12 +168,13 @@ k = table(county_census$fips)
 k[k > 1]
 
 #### CASE DATA ####
-df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>% 
+df0 = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>% 
   bind_rows(read.csv(here("0_Data", "Raw", "us-counties-2020.csv"))) %>%
   bind_rows(read.csv(here("0_Data", "Raw", "us-counties-2022.csv"))) %>%
   mutate(fips = as.numeric(sub("USA-", "", geoid)),
          fips = ifelse(fips %in% c(29037, 29165, 29047,29095), 29998, fips),
-         fips = ifelse(fips %in% c(29145, 29097, 29097), 29037, fips)) %>%
+         fips = ifelse(fips %in% c(29145, 29097), 29997, fips),
+         ) %>%
   
   # filter out PR & Virgin Islands & arrange
   filter(!state%in%c("American Samoa", "Guam",
@@ -182,11 +183,26 @@ df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>%
                      "Virgin Islands", 
                      "United States")) %>%
   
-  group_by(fips, date, state) %>%
+  group_by(fips, date, county, state) %>%
   summarize(cases_avg = sum(cases_avg, na.rm = T), deaths_avg = sum(deaths_avg, na.rm = T),
             chk1 = cases_avg_per_100k[1], chk2 = deaths_avg_per_100k[1]) %>%
   # join to county data
-  left_join(county_census, c("fips"="fips")) %>%
+  left_join(county_census, c("fips"="fips"))
+
+# df0 --> county_census
+# Only ones that didn't match were unknown
+# View(df0 %>% filter(is.na(POPESTIMATE2019)) %>% ungroup() %>% dplyr::select(state, fips, county) %>% unique())
+
+# county_census --> df0
+# Non-matches were full states or outside study scope
+# View(county_census %>% filter(!fips%in%df0$fips))
+
+# h --> df
+# Only NA (no match to HSA) or outside of study scope
+# View(h %>% filter(!fips %in% df0$fips) %>% ungroup() %>% unique())
+
+# finish joins
+df = df0 %>%
   filter(!is.na(POPESTIMATE2019)) %>%
   
   # join to state data
@@ -207,7 +223,7 @@ df = read.csv(here("0_Data", "Raw", "us-counties-2021.csv")) %>%
   # join to hospital data
   left_join(h %>% dplyr::select(date, fips, health_service_area_population.x,
                                 admits_confirmed_avg, perc_covid,
-                                admits_confirmed_100K, icu_100K), 
+                                admits_confirmed_100K, icu_confirmed_avg, icu_100K), 
             c("fips"="fips", "ymd"="date")) %>%
   
   # estimate CDC metrics
@@ -286,6 +302,10 @@ d_out_pre_cty = df %>%
          zeke_time_3 = lead(deaths_avg_per_100k*7, 3) > 1,
          two_zeke_time_3 = lead(deaths_avg_per_100k*7, 3) > 2,
          icu_2_time_3 = icu_21_lag_100K*7 > 2,
+         perc_covid_10_time_3 = lead(perc_covid_100, 3) > 10,
+         change_admits = admits_weekly - lag(admits_weekly, 1),
+         change_perc = perc_covid_100 - lag(perc_covid_100, 1),
+         change_cases = cases_weekly - lag(cases_weekly, 1),
          
          # 14-day outcomes
          zeke_time_3_14d = deaths_21_lag_100k_14d > 2,
@@ -295,7 +315,10 @@ d_out_pre_cty = df %>%
          state = fips) %>%
   group_by(ymd) %>%
   mutate(weight = POPESTIMATE2019/sum(POPESTIMATE2019),
-         weight_alt = 1/length(POPESTIMATE2019))
+         weight_alt = 1/length(POPESTIMATE2019)) %>%
+  
+  # filter out 3 fips codes with no HSA
+  filter(!fips %in% c(48067, 48203, 48315))
 
 ## CHECKS ##
 # check on lags
@@ -306,9 +329,14 @@ d_out_pre_cty %>% gather(var, value, deaths_weekly, admits_weekly, cases_weekly,
   filter(date<="2022-10-01") %>%
   group_by(var) %>% summarize(sum(is.na(value)))
 
+# check on joins
+# 4 counties missing some hosp data -- after 9/1 (not an issue as only death data is used for analysis henceforth)
+# View(d_out_pre_cty %>% filter(is.na(health_service_area_population.x)) %>% ungroup() %>% dplyr::select(ymd, state, fips, county) %>% unique())
+View(d_out_pre_cty %>% group_by(ymd) %>% summarize(sum(POPESTIMATE2019)))
+
 #### SAVE CLEANED DATA ####
 save(d_out_pre_cty, file = here("0_Data", "Cleaned", "county_time_data.RData"))
-
+write.csv(d_out_pre_cty, file = here("0_Data", "Cleaned", "county_time_data.csv"))
 
 
 

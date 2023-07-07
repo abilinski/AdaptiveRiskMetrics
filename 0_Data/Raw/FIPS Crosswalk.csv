@@ -1,0 +1,16 @@
+FIPS_Name,FIPS_Code,NYT_Code,NYT_Name,Notes
+Bronx,36005,36998,NYC,NYT combines
+Brooklyn/Kings,36047,36998,NYC,NYT combines
+New York,36061,36998,NYC,NYT combines
+Queens,36081,36998,NYC,NYT combines
+Richmond,36085,36998,NYC,NYT combines
+Cass,29037,29998,Kansas City,NYT reported Kansas City separately -- combine all
+Clay,29047,29998,Kansas City,NYT reported Kansas City separately -- combine all
+Jackson,29095,29998,Kansas City,NYT reported Kansas City separately -- combine all
+Platte,29165,29998,Kansas City,NYT reported Kansas City separately -- combine all
+Newton,29145,29997,Joplin,NYT reported Joplin separately -- combine all
+Jasper,29097,29997,Joplin,NYT reported Joplin separately -- combine all
+Lake and Peninsula Borough,2164,2997,Bristol Bay plus Lake and Peninsula,NYT combines
+Bristol Bay Borough,2060,2997,Bristol Bay plus Lake and Peninsula,NYT combines
+Hoonah–Angoon,2105,2998,Yakutat plus Hoonah-Angoon,NYT combines
+Yakutat City,2282,2998,Yakutat plus Hoonah-Angoon,NYT combines

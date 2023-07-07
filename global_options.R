@@ -33,4 +33,4 @@ foreach::getDoParWorkers()
 
 # palette
 pal = c("#fbe392", "#fab24d", "#ec8400", "#d25700", "#b02912")
-
+set.seed(02138)

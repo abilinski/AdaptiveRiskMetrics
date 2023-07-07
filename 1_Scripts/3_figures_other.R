@@ -31,7 +31,7 @@ ggplot(df, aes(x = x, y = time)) + geom_point() + #geom_line() +
   geom_text(x = 0, y = 9, label = expression(widehat(Y)[i][','][w+3]~"="~f(X[i][','][w], widehat(beta))))
 
 # export Figure 1
-ggsave(filename = here("2_Figures", "figure_diag.png"), width = 8, height = 3)
+ggsave(filename = here("2_Figures", "figure_diag.pdf"), width = 8, height = 3)
 
 #### FIGURE 2 ####
 
@@ -99,7 +99,7 @@ ggplot(figure1_data3, aes(x = ymd, y = med, group = paste(ymd, outcome_value2),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
   scale_y_continuous(trans='log2',
                      breaks = trans_breaks("log2", function(x) round(10^x))) 
-ggsave(filename = here("2_Figures", paste("fig_long", i, ".png", sep = "")), width = 8, height = 8)
+ggsave(filename = here("2_Figures", paste("fig_long", i, ".pdf", sep = "")), width = 8, height = 8)
 
 figure1_data4 = figure1_data %>% filter(date<="2022-10-01") %>% #filter(deaths_avg_per_100k*7<2) %>%
   mutate(
@@ -123,6 +123,6 @@ ggplot(figure1_data4 %>% filter(POPESTIMATE2019 > 500000),
   geom_vline(figure1_data4 %>% filter(var2=="Hospital admissions/100K"), mapping = aes(xintercept = log(10)), col = "darkgrey", lty = 2) + 
   geom_vline(figure1_data4 %>% filter(var2=="Percent bed occupancy"), mapping = aes(xintercept = log(10)), col = "darkgrey", lty = 2) 
 
-ggsave(filename = here("2_Figures", paste0("fig2", i, ".png")), width = 5.5, height = 8)
+ggsave(filename = here("2_Figures", paste0("fig2", i, ".pdf")), width = 7, height = 10)
 }
 
