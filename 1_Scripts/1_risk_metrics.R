@@ -260,7 +260,8 @@ run_specs = function(d_test_ind, w_ind, end_dates, form, var_lab, quarter = F,
   # filter data to only have on indicator
   z = best_measure_DT_reg(d_test_ind[var=="cdc_flag",], w = w_ind, end_dates = end_dates,
                           quarter = quarter, form = form, method = method)[,var:=var_lab]
-  if(save) save(z, file = here("2_Figures", "Data", "Raw", paste(type, "_data_", as.character(form), ifelse(quarter, "_simp", ""), ".RData", sep = "")))
+  
+  if(save) save(z, file = here("2_Figures", "Data", "Raw", paste(type, "_data_", deparse(form, width.cutoff = 500L), ifelse(quarter, "_simp", ""), ".RData", sep = "")))
   
   # summarize overall
   out = summ_metrics(z, by_start = by_start_val, end_pre_cut = end_pre_cut)

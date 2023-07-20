@@ -106,53 +106,53 @@ out2 %>% mutate(qy = paste(year(ymd), quarter(ymd))) %>%
   group_by(qy) %>% summarize(max(max_train_date), min(test_date-max_train_date), max(test_date-max_train_date),
                              max(weeks))
 
-#### Compare data frames ####
-
-# load data
-
-  # state
-  load(here("0_Data", "Cleaned", "state_time_data.RData"))
-  
-  
-  # HSA
-  load(here("0_Data", "Cleaned", "hsa_time_data_chk.RData"))
-  
-  # summarize by location
-  # state
-  g_state = d_out_pre_state %>% group_by(state, ymd) %>%
-    summarize(cases_avg = sum(cases_avg),
-              admits_confirmed_avg = sum(admits_confirmed_avg, na.rm = T),
-              icu_confirmed_avg = sum(icu_confirmed_avg, na.rm = T))
-
-  # hsa
-  g_hsa = d_out_pre_hsa %>% group_by(state_old, ymd) %>%
-    summarize(cases_avg = sum(cases_avg),
-              admits_confirmed_avg = sum(admits_confirmed_avg, na.rm = T),
-              icu_confirmed_avg = sum(icu_confirmed_avg, na.rm = T))
-  
-  # quite a few cross over states
-  # so there will be some duplicates
-  # meaning admits, ICU slightly greater than expected
-  # note that multipliers are not sensitive to slight changes in imputation parameters
-  d_out_pre_hsa %>% group_by(state) %>% summarize(num = length(unique(state_old))) %>%
-    group_by(num) %>% summarize(n())
-  View(d_out_pre_hsa %>% group_by(state) %>% summarize(unique(state_old)))
-  
-  # merge
-  temp = g_state %>% left_join(g_hsa, c("state" = "state_old", "ymd" = "ymd")) 
-  
-  # check percs
-  View(temp)
-  View(temp %>% group_by(state) %>%
-         summarize(
-           sum(cases_avg.y, na.rm = T)/sum(cases_avg.x, na.rm = T),
-           sum(admits_confirmed_avg.y, na.rm = T)/sum(admits_confirmed_avg.x, na.rm = T),
-           sum(icu_confirmed_avg.y, na.rm = T)/sum(icu_confirmed_avg.x, na.rm = T)))
-  View(temp %>% group_by(ymd) %>%
-         summarize(
-           sum(cases_avg.y, na.rm = T)/sum(cases_avg.x, na.rm = T),
-           sum(admits_confirmed_avg.y, na.rm = T)/sum(admits_confirmed_avg.x, na.rm = T),
-           sum(icu_confirmed_avg.y, na.rm = T)/sum(icu_confirmed_avg.x, na.rm = T)))
+# #### Compare data frames ####
+# 
+# # load data
+# 
+#   # state
+#   load(here("0_Data", "Cleaned", "state_time_data.RData"))
+#   
+#   
+#   # HSA
+#   load(here("0_Data", "Cleaned", "hsa_time_data_chk.RData"))
+#   
+#   # summarize by location
+#   # state
+#   g_state = d_out_pre_state %>% group_by(state, ymd) %>%
+#     summarize(cases_avg = sum(cases_avg),
+#               admits_confirmed_avg = sum(admits_confirmed_avg, na.rm = T),
+#               icu_confirmed_avg = sum(icu_confirmed_avg, na.rm = T))
+# 
+#   # hsa
+#   g_hsa = d_out_pre_hsa %>% group_by(state_old, ymd) %>%
+#     summarize(cases_avg = sum(cases_avg),
+#               admits_confirmed_avg = sum(admits_confirmed_avg, na.rm = T),
+#               icu_confirmed_avg = sum(icu_confirmed_avg, na.rm = T))
+#   
+#   # quite a few cross over states
+#   # so there will be some duplicates
+#   # meaning admits, ICU slightly greater than expected
+#   # note that multipliers are not sensitive to slight changes in imputation parameters
+#   d_out_pre_hsa %>% group_by(state) %>% summarize(num = length(unique(state_old))) %>%
+#     group_by(num) %>% summarize(n())
+#   View(d_out_pre_hsa %>% group_by(state) %>% summarize(unique(state_old)))
+#   
+#   # merge
+#   temp = g_state %>% left_join(g_hsa, c("state" = "state_old", "ymd" = "ymd")) 
+#   
+#   # check percs
+#   View(temp)
+#   View(temp %>% group_by(state) %>%
+#          summarize(
+#            sum(cases_avg.y, na.rm = T)/sum(cases_avg.x, na.rm = T),
+#            sum(admits_confirmed_avg.y, na.rm = T)/sum(admits_confirmed_avg.x, na.rm = T),
+#            sum(icu_confirmed_avg.y, na.rm = T)/sum(icu_confirmed_avg.x, na.rm = T)))
+#   View(temp %>% group_by(ymd) %>%
+#          summarize(
+#            sum(cases_avg.y, na.rm = T)/sum(cases_avg.x, na.rm = T),
+#            sum(admits_confirmed_avg.y, na.rm = T)/sum(admits_confirmed_avg.x, na.rm = T),
+#            sum(icu_confirmed_avg.y, na.rm = T)/sum(icu_confirmed_avg.x, na.rm = T)))
   
 #### ONE LAST GLOBAL TEST ####
   
@@ -168,11 +168,11 @@ out2 %>% mutate(qy = paste(year(ymd), quarter(ymd))) %>%
   chk_data_out$preds = predict(lm, newdata = chk_data_out, type = "response")  
 
   # load comparison
-  load(here("2_Figures", "Data", "Raw", "state_data_outcome_value ~ admits_weekly + current_zeke.RData"))
+  load(here("2_Output", "Raw", "state_data_outcome_value ~ admits_weekly + current_zeke.RData"))
   preds2 = z %>% filter(outcome_label=="zeke_time_3" & ymd == "2021-11-17")
   
   # compare
-  cbind(chk_data_out$preds, preds2$pred)
+  all.equal(chk_data_out$preds, preds2$pred)
   
   # now repeat for a quarter
   end_dates_chk = end_dates[end_dates>="2022-04-01" & end_dates<"2022-07-01"]

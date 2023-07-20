@@ -4,11 +4,11 @@ here::i_am("1_Scripts/3_figures.R")
 source("global_options.R")
 
 # main location
-location = "Data/Base"
+location = "Base"
 
 # load files
-g = list.files(here("2_Figures",  location))
-for(i in 1:length(g)) load(here("2_Figures",  location, g[i]))
+g = list.files(here("2_Output",  location))
+for(i in 1:length(g)) load(here("2_Output",  location, g[i]))
 
 # recode
 state_0[var=="0 0 0", var:="Prevalence"]
@@ -86,8 +86,8 @@ a.2 = ggarrange(p1, p3, p2, ncol = 1, common.legend = T,
               legend = "bottom")
 
 # save plots
-ggsave(a, filename = here("2_Figures", "figures_time.pdf"), width = 12, height = 7)
-ggsave(a.2, filename = here("2_Figures", "figures_time_hsa.pdf"), width = 12, height = 10.5)
+ggsave(a, filename = here("3_Figures", "figures_time.png"), width = 12, height = 7)
+ggsave(a.2, filename = here("3_Figures", "figures_time_hsa.png"), width = 12, height = 10.5)
 
 #### MAIN TABLE ####
 make_table = function(lists = list(county[[1]][,type:="H"]), filter_best = F, value_weight = "Neutral", met = "Weighted accuracy", outcomes = c("zeke_time_3", "two_zeke_time_3"), write = F,
@@ -120,7 +120,7 @@ make_table = function(lists = list(county[[1]][,type:="H"]), filter_best = F, va
       mutate(level = label) %>%
       dplyr::select(level, lab, lab2, type, var)
     write.table(x = out,
-            file = here("2_Figures", paste0("table_S1.csv")), append = label!="States", sep = ",",
+            file = here("3_Figures", paste0("table_S1.csv")), append = label!="States", sep = ",",
             row.names = F, col.names = label=="States")}
   
   states_plot = states_plot %>%
@@ -238,21 +238,21 @@ table = ggarrange(states[[1]], counties[[1]],
                   ncol = 1, common.legend = T,
                   legend = "bottom")
 
-ggsave(table, filename = here("2_Figures",  paste("table.pdf")), width = 10, height = 10)
+ggsave(table, filename = here("3_Figures",  paste("table.png")), width = 10, height = 10)
 
 # combine into table with HSAs
 table.2 = ggarrange(states[[1]], hsas[[1]], counties[[1]], 
                   ncol = 1, common.legend = T,
                   legend = "bottom")
 
-ggsave(table.2, filename = here("2_Figures",  paste("table_with_HSA.pdf")), width = 10, height = 15)
+ggsave(table.2, filename = here("3_Figures",  paste("table_with_HSA.png")), width = 10, height = 15)
 
 # secondary outcomes
 table_sec = ggarrange(states.2[[1]], hsas.2[[1]], counties.2[[1]], 
                     ncol = 1, common.legend = T,
                     legend = "bottom")
 
-ggsave(table_sec, filename = here("2_Figures",  paste("table_sec_with_HSA.pdf")), width = 10, height = 15)
+ggsave(table_sec, filename = here("3_Figures",  paste("table_sec_with_HSA.png")), width = 10, height = 15)
 
 
 #### TABLES ####
@@ -317,7 +317,7 @@ table.2 = ggarrange(states[[1]], hsas[[1]], counties[[1]],
                     ncol = 1, common.legend = T,
                     legend = "bottom")
 
-ggsave(table.2, filename = here("2_Figures",  paste("table_with_HSA.pdf")), width = 10, height = 15)
+ggsave(table.2, filename = here("3_Figures",  paste("table_with_HSA.png")), width = 10, height = 15)
 #### FIGURE 3 EXPANDED ####
 # state table
 states = make_table2(lists = state_list,
@@ -337,9 +337,9 @@ counties = make_table2(lists = county_list,
 
 
 # arrange
-ggsave(states[[1]], filename = here("2_Figures",  paste("states_full.pdf")), width = 15, height = 11)
-ggsave(hsas[[1]], filename = here("2_Figures",  paste("hsas_full.pdf")), width = 15, height = 11)
-ggsave(counties[[1]], filename = here("2_Figures",  paste("counties_full.pdf")), width = 15, height = 11)
+ggsave(states[[1]], filename = here("3_Figures",  paste("states_full.png")), width = 15, height = 11)
+ggsave(hsas[[1]], filename = here("3_Figures",  paste("hsas_full.png")), width = 15, height = 11)
+ggsave(counties[[1]], filename = here("3_Figures",  paste("counties_full.png")), width = 15, height = 11)
 
 #### ROC CURVES ####
 library(MASS)
@@ -422,7 +422,7 @@ c = make_roc(county_HO, rbindlist(list(county_CHO1, county_CHO2, county_CHO3)),
 
 # combined
 roc = ggarrange(s, c, common.legend = T, legend = "bottom", ncol = 1)
-ggsave(roc, filename = here("2_Figures",  paste("roc_curves.pdf")), width = 8, height = 7)
+ggsave(roc, filename = here("3_Figures",  paste("roc_curves.png")), width = 8, height = 7)
 
 
 #### TEXT ####
@@ -494,12 +494,12 @@ states[[2]] %>% filter(lab=="Neutral" & var!="Prevalence" & grepl("dapti", var) 
 
 #### OMICRON SUB ANALYSES ####
 
-# main location
-location = "Data/Omicron"
+# omicron location
+location = "Omicron"
 
 # load files
-g = list.files(here("2_Figures",  location))
-for(i in 1:length(g)) load(here("2_Figures",  location, g[i]))
+g = list.files(here("2_Output",  location))
+for(i in 1:length(g)) load(here("2_Output",  location, g[i]))
 
 # recode
 state_0[var=="0 0 0", var:="Prevalence"]
@@ -550,7 +550,7 @@ table.2 = ggarrange(states[[1]], hsas[[1]], counties[[1]],
                     ncol = 1, common.legend = T,
                     legend = "bottom")
 
-ggsave(table.2, filename = here("2_Figures",  paste("table_with_HSA_OMICRON.pdf")), width = 10, height = 15)
+ggsave(table.2, filename = here("3_Figures",  paste("table_with_HSA_OMICRON.png")), width = 10, height = 15)
 
 #### MAIN TABLE ####
 make_table3 = function(lists = list(county[[1]][,type:="H"]), filter_best = F, value_weight = "Neutral", met = "Weighted accuracy", outcomes = c("zeke_time_3", "two_zeke_time_3"),
@@ -635,7 +635,7 @@ hsas3 = make_table3(lists = hsa_list,
                       value_weight = unique(state$lab)[-4])
 
 ggsave(ggarrange(states3[[1]], hsas3[[1]], ncol = 1), 
-       filename = here("2_Figures",  paste("table_alt_specs.pdf")), width = 10, height = 16)
+       filename = here("3_Figures",  paste("table_alt_specs.png")), width = 10, height = 16)
 
 #### SWITCHING ANALYSES ####
 
@@ -656,11 +656,11 @@ run_switches = function(f1 = "state_data_outcome_value ~ admits_weekly + current
                         type = "state", d_out_pre = d_out_pre_state){
   
   # mortality 
-  load(here("2_Figures", "Data", "Raw", f1))
+  load(here("2_Output", "Raw", f1))
   z1 = z %>% filter(outcome_label %in%c("zeke_time_3", "two_zeke_time_3"))
   
   # health systems
-  load(here("2_Figures", "Data", "Raw", f2))
+  load(here("2_Output", "Raw", f2))
   z2 = z %>% filter(outcome_label %in%c("icu_2_time_3", "perc_covid_10_time_3"))
   
   # bind them
@@ -680,7 +680,7 @@ run_switches = function(f1 = "state_data_outcome_value ~ admits_weekly + current
       theme(panel.border = element_blank(), panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(), axis.line = element_blank())
     
-    ggsave(filename = here("2_Figures",  paste("evolution_plot.pdf")), width = 11, height = 11)
+    ggsave(filename = here("3_Figures",  paste("evolution_plot.png")), width = 11, height = 11)
   }
   
   
@@ -706,7 +706,7 @@ run_switches = function(f1 = "state_data_outcome_value ~ admits_weekly + current
                        tot.y[outcome_label=="cdc_flag" & var=="chg2"])) %>% 
     dplyr::select(lab2, var, tot.y, tot.x, CL) %>% filter(!is.na(lab2))
   
-  write.csv(v_out,  here("2_Figures", paste0(type, "_switches.csv")))
+  write.csv(v_out,  here("3_Figures", paste0(type, "_switches.csv")))
 }
 
 # run state switches

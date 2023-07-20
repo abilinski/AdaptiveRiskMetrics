@@ -71,26 +71,26 @@ run_analyses = function(type_val = "state", run = 1:13, save = F, specs = FALSE)
   cuts = c(1/100,1/20,1/15,1/10,1/7,1/5,1/3,1/2,1,2,3,5,7,10,15,20,100)
   if(12 %in% run) assign(dfs[12], run_roc(d_out_pre, admit_levels = admit_levels, run_all = T, cuts = cuts)); gc()
   
-  save(list = dfs[run], file = here("2_Figures", location, paste(type, "_data_", min(run), "_", max(run), ".RData", sep = "")))
+  save(list = dfs[run], file = here("2_Figures", location, paste(type_val, "_data_", min(run), "_", max(run), ".RData", sep = "")))
 }
 
 # set up saving
 save_var = type=="base"
 
 # run states
-run_analyses("state", save = save_var, specs = type=="base")
+run_analyses(type_val = "state", save = save_var, specs = type=="base")
 
 # run hsa
-run_analyses("hsa", save = save_var, specs = type=="base")
+run_analyses(type_val = "hsa", save = save_var, specs = type=="base")
 
 # run counties
-run_analyses("county", 1:4, save = save_var)
-run_analyses("county", 5)
-run_analyses("county", 6)
-run_analyses("county", 7)
-run_analyses("county", 8)
-run_analyses("county", 13)
-run_analyses("county", 9)
-run_analyses("county", 10:12)
+run_analyses(type_val = "county", 1:4, save = save_var)
+run_analyses(type_val = "county", 5)
+run_analyses(type_val = "county", 6)
+run_analyses(type_val = "county", 7)
+run_analyses(type_val = "county", 8)
+run_analyses(type_val = "county", 13)
+run_analyses(type_val = "county", 9)
+run_analyses(type_val = "county", 10:12)
 }
 

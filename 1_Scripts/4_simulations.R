@@ -17,7 +17,6 @@ end_date = "2022-10-01"
 d1 = d_out_pre_state %>% filter(ymd>="2021-04-01" & ymd <=end_date) %>%
   mutate(weight = weight_alt, quarter = paste(year, quarter(ymd)))
 
-
 # constant prevalence
 d2 = d_out_pre_state %>% filter(ymd>="2021-04-01" & ymd <=end_date) %>%
   ungroup() %>%
@@ -61,7 +60,7 @@ p1 = ggplot(param_dates %>%
   scale_x_date(date_labels = "%b %y")
 
 # save plot
-ggsave(p1, filename = here("2_Figures", "sims_setup.png"), width = 8, height = 5)
+ggsave(p1, filename = here("3_Figures", "sims_setup.png"), width = 8, height = 5)
 
 #### SIMULATION FUNCTION ####
 run_sims = function(d1, param_dates, scale_val = 0, gvars = c("month", "var", "outcome_label")){
@@ -91,8 +90,11 @@ run_sims = function(d1, param_dates, scale_val = 0, gvars = c("month", "var", "o
            lag_cutoff5 = lag(cutoff5, 3),
            lag_cutoff6 = lag(cutoff6, 3))
   
+  # run models
   state = run_base_ests_sims(temp_df2, admit_levels = admit_levels, run_all = T, gvars = gvars,
                         outcomes = c("cutoff1", "cutoff2", "cutoff3", "cutoff4", "cutoff5", "cutoff6")); gc()
+  
+  # rename output
   state = state[, lab2:=outcome_label]
   state = state[, lab:="Neutral"]
   state = state[!outcome_label%in%c("cutoff1", "cutoff5") & !var%in%c("Community level", "Adaptive: CHOZ", "Adaptive: CHO")]
@@ -222,5 +224,5 @@ sim_out = make_table(lists = list(data.table(s0)[,type:="H"],
                                   data.table(s2)[,type:="H"]))
 
 # save plot
-ggsave(sim_out[[1]], width = 15, height = 8, filename = here("2_Figures", "sims_results.png"))                            
+ggsave(sim_out[[1]], width = 15, height = 8, filename = here("3_Figures", "sims_results.png"))                            
 
