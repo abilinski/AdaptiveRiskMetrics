@@ -418,7 +418,7 @@ s = make_roc(state_HO = state_HO, state_CHO = rbindlist(list(state_CHO1, state_C
 c = make_roc(county_HO, rbindlist(list(county_CHO1, county_CHO2, county_CHO3)), 
              county_roc, title = "Counties",
              block1 = c(1/2, 1/10, 1/5,7, 1/7, 10,15,20, 1/20),
-             block2 = c(1/3, 1/2, 20, 1/7, 1/15, 1/20, 2, 3, 7), v4 = "150 10 5")
+             block2 = c(1/3, 1/2, 20, 1/7, 1/15, 1/20, 2, 3, 7), v4 = "150 15 5")
 
 # combined
 roc = ggarrange(s, c, common.legend = T, legend = "bottom", ncol = 1)
